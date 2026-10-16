@@ -50,7 +50,6 @@ const CameraMacroRig: React.FC = () => {
   const explodedProgress = useHorologyStore((s) => s.explodedProgress);
   const prevExplodedBool = useRef(false);
 
-  // Smooth GSAP transition when user switches Camera Macro Presets
   useEffect(() => {
     const preset = CAMERA_PRESETS[cameraPreset];
     if (!preset) return;
@@ -79,7 +78,6 @@ const CameraMacroRig: React.FC = () => {
     }
   }, [cameraPreset, camera]);
 
-  // Automatically swing to an oblique architectural angle when Blueprint Explode is toggled on from Dial Hero
   useEffect(() => {
     const isNowExploded = explodedProgress > 0.5;
     if (isNowExploded !== prevExplodedBool.current) {
@@ -121,15 +119,17 @@ const AdaptiveStudioLighting: React.FC = () => {
   const { scene } = useThree();
   const isNightLume = useHorologyStore((s) => s.isNightLume);
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
-  const fillLightRef = useRef<THREE.SpotLight>(null);
+  const rimSpotRef = useRef<THREE.SpotLight>(null);
+  const pointerGlintLightRef = useRef<THREE.PointLight>(null);
+  const envGroupRef = useRef<THREE.Group>(null);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const clampedDelta = Math.min(delta, 0.1);
-    const targetEnvIntensity = isNightLume ? 0.08 : 1.2;
+    const targetEnvIntensity = isNightLume ? 0.08 : 1.45;
     if ('environmentIntensity' in scene) {
       (scene as THREE.Scene & { environmentIntensity: number }).environmentIntensity =
         THREE.MathUtils.damp(
-          (scene as THREE.Scene & { environmentIntensity: number }).environmentIntensity ?? 1.2,
+          (scene as THREE.Scene & { environmentIntensity: number }).environmentIntensity ?? 1.45,
           targetEnvIntensity,
           6,
           clampedDelta
@@ -139,15 +139,42 @@ const AdaptiveStudioLighting: React.FC = () => {
     if (keyLightRef.current) {
       keyLightRef.current.intensity = THREE.MathUtils.damp(
         keyLightRef.current.intensity,
-        isNightLume ? 0.12 : 2.4,
+        isNightLume ? 0.14 : 2.8,
+        6,
+        clampedDelta
+      );
+      const sweep = Math.sin(state.clock.elapsedTime * 0.5) * 1.6;
+      keyLightRef.current.position.x = 2.5 + sweep;
+    }
+
+    if (rimSpotRef.current) {
+      rimSpotRef.current.intensity = THREE.MathUtils.damp(
+        rimSpotRef.current.intensity,
+        isNightLume ? 0.1 : 2.4,
         6,
         clampedDelta
       );
     }
-    if (fillLightRef.current) {
-      fillLightRef.current.intensity = THREE.MathUtils.damp(
-        fillLightRef.current.intensity,
-        isNightLume ? 0.08 : 1.6,
+
+    if (pointerGlintLightRef.current) {
+      const angle = state.clock.elapsedTime * 0.65;
+      const targetX = state.pointer.x * 2.8 + Math.cos(angle) * 2.0;
+      const targetY = state.pointer.y * 2.4 + Math.sin(angle) * 2.0;
+      pointerGlintLightRef.current.position.x = THREE.MathUtils.damp(
+        pointerGlintLightRef.current.position.x,
+        targetX,
+        8,
+        clampedDelta
+      );
+      pointerGlintLightRef.current.position.y = THREE.MathUtils.damp(
+        pointerGlintLightRef.current.position.y,
+        targetY,
+        8,
+        clampedDelta
+      );
+      pointerGlintLightRef.current.intensity = THREE.MathUtils.damp(
+        pointerGlintLightRef.current.intensity,
+        isNightLume ? 0.25 : 2.6,
         6,
         clampedDelta
       );
@@ -156,67 +183,114 @@ const AdaptiveStudioLighting: React.FC = () => {
 
   return (
     <>
-      <ambientLight intensity={isNightLume ? 0.04 : 0.25} />
+      <ambientLight intensity={isNightLume ? 0.04 : 0.45} />
+
+      {/* Main Dynamic Sweeping Studio Key Light */}
       <directionalLight
         ref={keyLightRef}
-        position={[4, 6, 5]}
-        intensity={2.4}
+        position={[2.5, 4.2, 5.5]}
+        intensity={2.8}
+        color="#fffbeb"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
+
+      {/* Warm Champagne Left Front Fill Light (illuminates flat brushed metal faces) */}
+      <directionalLight
+        position={[-2.8, 2.5, 6.0]}
+        intensity={isNightLume ? 0.08 : 2.2}
+        color="#fef3c7"
+      />
+
+      {/* Cool Rhodium Silver Right Front Kicker (illuminates internal gears & bridges) */}
+      <directionalLight
+        position={[3.2, -2.2, 5.8]}
+        intensity={isNightLume ? 0.08 : 1.9}
+        color="#e0f2fe"
+      />
+
+      {/* Warm Champagne Rim Spotlight */}
       <spotLight
-        ref={fillLightRef}
-        position={[-5, 3, 4]}
-        angle={0.5}
-        penumbra={1}
-        intensity={1.6}
+        ref={rimSpotRef}
+        position={[-5.2, 3.2, 3.5]}
+        angle={0.55}
+        penumbra={0.9}
+        intensity={2.4}
         color="#fde68a"
       />
 
-      {/* SKILL 2.1: 5 Procedural Studio Lightformer Softboxes for High-Contrast Metallic Specular Reflections */}
+      {/* Interactive Cursor-Following Metallic Specular Glint Light */}
+      <pointLight
+        ref={pointerGlintLightRef}
+        position={[2.0, 2.0, 2.8]}
+        intensity={2.6}
+        distance={8}
+        decay={1.6}
+        color="#ffffff"
+      />
+
+      {/* Swiss Watchmaker Studio Reflection Tent (Includes Front-Axis Softboxes at z=+7.5 for Flat Metal Faces!) */}
       <Environment resolution={512}>
-        <group rotation={[-0.15, 0, 0]}>
-          {/* 1. Top Key Softbox */}
+        <group ref={envGroupRef}>
+          {/* FRONT-AXIS SOFTBOX 1 (Upper-Left behind camera: illuminates brushed bezel & gear faces with warm gold gradient) */}
           <Lightformer
             form="rect"
-            intensity={4}
-            position={[0, 8, 2]}
-            scale={[10, 4, 1]}
-            rotation-x={Math.PI / 2}
-            color="#ffffff"
+            intensity={2.6}
+            position={[-3.2, 3.2, 7.5]}
+            scale={[6.5, 4.5, 1]}
+            target={[0, 0, 0]}
+            color="#fff7ed"
           />
-          {/* 2. Left Warm Rim Strip */}
+          {/* FRONT-AXIS SOFTBOX 2 (Lower-Right behind camera: illuminates opposite half of bezel & gears with crisp silver gradient) */}
           <Lightformer
             form="rect"
-            intensity={2.5}
-            position={[-6, 2, -2]}
-            scale={[8, 2, 1]}
-            rotation-y={Math.PI / 2}
-            color="#fde68a"
+            intensity={2.4}
+            position={[3.4, -2.8, 7.5]}
+            scale={[6.5, 4.5, 1]}
+            target={[0, 0, 0]}
+            color="#f0f9ff"
           />
-          {/* 3. Right Cool Specular Strip */}
-          <Lightformer
-            form="rect"
-            intensity={3}
-            position={[6, 3, 2]}
-            scale={[8, 2, 1]}
-            rotation-y={-Math.PI / 2}
-            color="#e0f2fe"
-          />
-          {/* 4. Front Fill Ring */}
+          {/* FRONT-AXIS DIFFUSED FILL RING (directly behind camera at z=+8: prevents flat metal faces from ever looking dark) */}
           <Lightformer
             form="ring"
             intensity={1.5}
-            position={[0, 0, 6]}
-            scale={4}
-            color="#ffffff"
+            position={[0, 0, 8.0]}
+            scale={6.5}
+            color="#fef3c7"
           />
-          {/* 5. Bottom Subtle Metallic Bounce */}
+          {/* Top Overhead Main Studio Softbox (for 12h bezel bevels & lugs) */}
           <Lightformer
             form="rect"
-            intensity={1.2}
-            position={[0, -7, 1]}
-            scale={[9, 3, 1]}
+            intensity={3.8}
+            position={[0, 7.5, 2.5]}
+            scale={[10, 3.5, 1]}
+            rotation-x={Math.PI / 2}
+            color="#ffffff"
+          />
+          {/* Left Warm 18K Champagne Rim Strip */}
+          <Lightformer
+            form="rect"
+            intensity={3.2}
+            position={[-6, 2.2, 2.0]}
+            scale={[8, 2.2, 1]}
+            rotation-y={Math.PI / 2}
+            color="#fde68a"
+          />
+          {/* Right Cool Steel Specular Strip */}
+          <Lightformer
+            form="rect"
+            intensity={3.4}
+            position={[6, 1.8, 2.2]}
+            scale={[8, 2.2, 1]}
+            rotation-y={-Math.PI / 2}
+            color="#e0f2fe"
+          />
+          {/* Bottom Warm Metallic Bounce (for 6h bezel bevels & Tourbillon bridge) */}
+          <Lightformer
+            form="rect"
+            intensity={2.5}
+            position={[0, -7, 2.0]}
+            scale={[9, 3.5, 1]}
             rotation-x={-Math.PI / 2}
             color="#fed7aa"
           />
@@ -231,13 +305,13 @@ export const HorologyCanvas: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-0 h-screen w-screen bg-[#07080B]">
-      {/* Subtle radial vignette backdrop behind 3D watch */}
+      {/* Subtle studio luxury vignette & ambient halo behind 3D watch */}
       <div
         className="pointer-events-none absolute inset-0 transition-opacity duration-700"
         style={{
           background: isNightLume
-            ? 'radial-gradient(circle at 50% 50%, rgba(0, 245, 212, 0.07) 0%, rgba(7, 8, 11, 0.98) 68%)'
-            : 'radial-gradient(circle at 50% 50%, rgba(230, 168, 124, 0.08) 0%, rgba(7, 8, 11, 0.98) 70%)',
+            ? 'radial-gradient(circle at 50% 50%, rgba(0, 245, 212, 0.09) 0%, rgba(7, 8, 11, 0.98) 68%)'
+            : 'radial-gradient(circle at 50% 50%, rgba(223, 172, 140, 0.14) 0%, rgba(18, 22, 31, 0.5) 42%, rgba(7, 8, 11, 0.98) 74%)',
         }}
       />
 
@@ -248,7 +322,7 @@ export const HorologyCanvas: React.FC = () => {
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.15,
+          toneMappingExposure: 1.18,
         }}
       >
         <AdaptiveStudioLighting />
@@ -271,13 +345,13 @@ export const HorologyCanvas: React.FC = () => {
           far={4}
         />
 
-        {/* Subtle Optical Bloom ONLY for Super-LumiNova Night Lume & Specular Highlights */}
+        {/* Controlled Optical Specular Glint & Night Lume Bloom */}
         <EffectComposer enableNormalPass={false}>
           <Bloom
             luminanceThreshold={isNightLume ? 0.35 : 0.92}
             mipmapBlur
-            intensity={isNightLume ? 1.45 : 0.2}
-            radius={0.65}
+            intensity={isNightLume ? 1.5 : 0.28}
+            radius={0.55}
           />
         </EffectComposer>
       </Canvas>
