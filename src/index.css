@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #07080B;
+    color: #ffffff;
+  }
+}
+
+/* Custom Luxury Range Slider */
+input[type='range'].horology-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range'].horology-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+input[type='range'].horology-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: #f59e0b;
+  border: 2px solid #fff;
+  margin-top: -5px;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.65);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+input[type='range'].horology-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #fbbf24;
+}
