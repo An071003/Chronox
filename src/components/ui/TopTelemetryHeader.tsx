@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Moon, Volume2, VolumeX, Layers, Sparkles } from 'lucide-react';
 import { useHorologyStore } from '../../store/useHorologyStore';
+import { useEclipseStore } from '../../store/useEclipseStore';
 import { horologyAudio } from '../../utils/horologyAudioEngine';
 
 function formatChronoTime(ms: number): string {
@@ -25,6 +26,7 @@ export const TopTelemetryHeader: React.FC = () => {
   const toggleNightLume = useHorologyStore((s) => s.toggleNightLume);
   const toggleAudio = useHorologyStore((s) => s.toggleAudio);
   const toggleBlueprintExplode = useHorologyStore((s) => s.toggleBlueprintExplode);
+  const setExperienceMode = useEclipseStore((s) => s.setExperienceMode);
 
   const [localTimeStr, setLocalTimeStr] = useState('00:00:00.0');
 
@@ -64,9 +66,13 @@ export const TopTelemetryHeader: React.FC = () => {
             <span className="font-display text-sm font-bold tracking-[0.18em] text-white">
               CHRONO-X // GENÈVE
             </span>
-            <span className="hidden rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-300 2xl:inline-block">
-              POINÇON DE GENÈVE
-            </span>
+            <button
+              type="button"
+              onClick={() => setExperienceMode('eclipse')}
+              className="rounded-full border border-amber-400/50 bg-amber-500/15 px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-200 transition-all hover:bg-amber-500/30"
+            >
+              SWITCH TO ECLIPSE BOSS
+            </button>
           </div>
           <p className="font-mono text-[10px] tracking-widest text-zinc-400">
             REF. RM-026 SKELETON TOURBILLON
