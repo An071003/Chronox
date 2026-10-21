@@ -1,4 +1,4 @@
-# ⌚ CHRONO-X // GENÈVE — Calibre RM-026 Tourbillon Horology Lab
+# ⌚ CHRONO-X // GENÈVE — Haute Horlogerie 3D Lab
 
 > **Awwwards-grade Haute Horlogerie 3D Experience & Real-Time Mechanical Simulator**  
 > Inspired by Richard Mille, Audemars Piguet, and high-complication Swiss mechanical watchmaking.
@@ -8,6 +8,24 @@
 🌐 **Live Product URL:** [https://an071003.github.io/Chronox/](https://an071003.github.io/Chronox/)
 
 ---
+
+## ⌚ Two Watches
+
+| Model | Highlights |
+| --- | --- |
+| **Classique Date 36** (default) | Round 36 mm case with crowned polished lugs, 52 brilliant-cut diamond / fluted / smooth bezels, fluted-motif or sunray dials (normal + anisotropy maps), applied 18K batons, rolling date wheel under a cyclops lens, 5-link jubilee-style bracelet wrapped around a velvet cushion, exhibition caseback with 4 Hz balance and self-winding rotor. |
+| **Skeleton Tourbillon RM-026** | Octagonal case, flying tourbillon, chronograph pushers, power reserve and the original six-layer skeleton calibre. |
+
+### Classique editions
+`Rose Gold Diamond` (silver fluted motif) · `Yellow Fluted` (champagne sunray) · `Steel Azure` (blue sunray) · `Mint Fluted` (mint green sunray)
+
+### Interaction & motion
+- Brand intro curtain, camera dolly-in reveal and staggered HUD entrance.
+- Turntable spin on edition change, scale/spin transition between models, pointer-parallax tilt.
+- Studio reflections follow the cursor (`scene.environmentRotation`), HDR diamond glints picked up by bloom.
+- Click the crown to wind, the date window to quickset, the diamond bezel to scintillate.
+- Bracelet unclasps and the cushion fades away for the caseback and exploded views.
+- Adaptive quality: drops pixel ratio / MSAA / contact shadows on GPUs that fall below 40 fps.
 
 ## ✨ Key Complications & Features
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
-import { Html, RoundedBox } from '@react-three/drei';
+import { MeshTransmissionMaterial, RoundedBox } from '@react-three/drei';
+import { BlueprintCallout } from './BlueprintCallout';
 import * as THREE from 'three';
 import {
   useHorologyStore,
@@ -132,6 +133,9 @@ export const TourbillonWatchModel: React.FC = () => {
 
   // Persistent animation state (zero allocations in useFrame)
   const animState = useRef({
+    midnightMs: new Date().setHours(0, 0, 0, 0),
+    isClockPrimed: false,
+    pendingReserveDrain: 0,
     simOffsetSeconds: 0,
     lastQuantizedTick: -1,
     dampedTourbillonAngle: 0,
@@ -319,7 +323,12 @@ export const TourbillonWatchModel: React.FC = () => {
     }
 
     // Slowly deplete power reserve and decay crown torque indicator
-    store.depletePowerReserve(clampedDelta * 0.015 * store.timeMultiplier);
+    // Batch the slow reserve drain so HUD panels re-render a few times per minute, not every frame
+    st.pendingReserveDrain += clampedDelta * 0.015 * store.timeMultiplier;
+    if (st.pendingReserveDrain > 0.05) {
+      store.depletePowerReserve(st.pendingReserveDrain);
+      st.pendingReserveDrain = 0;
+    }
     if (store.crownTorque > 0) {
       store.decayCrownTorque(clampedDelta);
     }
@@ -341,9 +350,8 @@ export const TourbillonWatchModel: React.FC = () => {
     }
 
     // 2. Real-Time System Clock + Mechanical 6Hz (21,600 VPH) Escapement Quantization
-    const now = new Date();
-    const rawSystemSeconds =
-      now.getSeconds() + now.getMilliseconds() / 1000 + st.simOffsetSeconds;
+    // Seconds since mount-day midnight keep growing, so the carriage never sweeps backward at :00
+    const rawSystemSeconds = (Date.now() - st.midnightMs) / 1000 + st.simOffsetSeconds;
 
     const tickIndex = Math.floor(rawSystemSeconds * 6);
     const mechanicalSeconds = tickIndex / 6;
@@ -357,12 +365,8 @@ export const TourbillonWatchModel: React.FC = () => {
       }
     }
 
-    const totalMinutes =
-      now.getMinutes() + (rawSystemSeconds % 60) / 60 + st.simOffsetSeconds / 60;
-    const totalHours = (now.getHours() % 12) + totalMinutes / 60;
-
-    const hourAngle = -(totalHours / 12) * Math.PI * 2;
-    const minuteAngle = -(totalMinutes / 60) * Math.PI * 2;
+    const hourAngle = -(rawSystemSeconds / 43200) * Math.PI * 2;
+    const minuteAngle = -(rawSystemSeconds / 3600) * Math.PI * 2;
 
     if (handHourRef.current) {
       handHourRef.current.rotation.z = hourAngle;
@@ -373,6 +377,11 @@ export const TourbillonWatchModel: React.FC = () => {
 
     // 3. Flying Tourbillon Choreography (at 6 o'clock)
     const targetTourbillonAngle = -(mechanicalSeconds / 60) * Math.PI * 2;
+    if (!st.isClockPrimed) {
+      // Start at the live position instead of spinning up from 0 on mount
+      st.isClockPrimed = true;
+      st.dampedTourbillonAngle = targetTourbillonAngle;
+    }
     st.dampedTourbillonAngle = THREE.MathUtils.damp(
       st.dampedTourbillonAngle,
       targetTourbillonAngle,
@@ -672,11 +681,7 @@ export const TourbillonWatchModel: React.FC = () => {
         ))}
 
         {showBlueprintCallouts && (
-          <Html position={[-1.65, -0.45, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-amber-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-amber-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-amber-400">L01 //</span> EXHIBITION SAPPHIRE CASEBACK
-            </div>
-          </Html>
+          <BlueprintCallout position={[0.94, -0.85, -0.05]} layer="L01" text="EXHIBITION SAPPHIRE CASEBACK" tone="amber" delayMs={250} />
         )}
       </group>
 
@@ -829,11 +834,7 @@ export const TourbillonWatchModel: React.FC = () => {
         </group>
 
         {showBlueprintCallouts && (
-          <Html position={[1.68, 0.28, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-amber-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-amber-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-amber-400">L02 //</span> INVOLUTE GEAR TRAIN &amp; MAINSPRING BARREL
-            </div>
-          </Html>
+          <BlueprintCallout position={[1.17, -0.5, 0.0]} layer="L02" text="INVOLUTE GEAR TRAIN & MAINSPRING BARREL" tone="amber" delayMs={200} />
         )}
       </group>
 
@@ -960,11 +961,7 @@ export const TourbillonWatchModel: React.FC = () => {
         </group>
 
         {showBlueprintCallouts && (
-          <Html position={[-1.65, -0.1, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-cyan-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-cyan-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-cyan-400">L03 //</span> 3Hz FLYING TOURBILLON &amp; RUBY SHOCK ABSORBER
-            </div>
-          </Html>
+          <BlueprintCallout position={[1.26, 0.25, 0.0]} layer="L03" text="3Hz FLYING TOURBILLON & RUBY SHOCK ABSORBER" tone="cyan" delayMs={150} />
         )}
       </group>
 
@@ -1242,11 +1239,7 @@ export const TourbillonWatchModel: React.FC = () => {
         </group>
 
         {showBlueprintCallouts && (
-          <Html position={[1.68, -0.05, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-emerald-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-emerald-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-emerald-400">L04 //</span> PVD SKELETON BRIDGES &amp; DAUPHINE HANDS
-            </div>
-          </Html>
+          <BlueprintCallout position={[1.26, 0.17, 0.05]} layer="L04" text="PVD SKELETON BRIDGES & DAUPHINE HANDS" tone="emerald" delayMs={100} />
         )}
       </group>
 
@@ -1470,11 +1463,7 @@ export const TourbillonWatchModel: React.FC = () => {
         </group>
 
         {showBlueprintCallouts && (
-          <Html position={[-1.72, 0.52, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-amber-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-amber-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-amber-400">L05 //</span> OCTAGONAL CASE, 8 SPLINE BOLTS &amp; CROWN
-            </div>
-          </Html>
+          <BlueprintCallout position={[1.17, 0.5, 0.17]} layer="L05" text="OCTAGONAL CASE, 8 SPLINE BOLTS & CROWN" tone="amber" delayMs={50} />
         )}
       </group>
 
@@ -1485,17 +1474,21 @@ export const TourbillonWatchModel: React.FC = () => {
       <group ref={layer06SapphireRef} name="Layer_06_Sapphire_Crystal_Dome" position={[0, 0, 0.16]}>
         <mesh position={[0, 0, -2.38]} rotation={[Math.PI / 2, 0, 0]}>
           <sphereGeometry args={[2.6, 64, 32, 0, Math.PI * 2, 0, 0.398]} />
-          <meshPhysicalMaterial
-            color="#e0f2fe"
-            transparent
-            opacity={0.045}
-            roughness={0.08}
-            metalness={0.02}
+          <MeshTransmissionMaterial
+            // Built-in transmission pass: it is cleared every frame, unlike MTM's own FBO,
+            // which the EffectComposer (autoClear=false) would otherwise smear into ghost trails
+            transmissionSampler
+            backside={false}
+            samples={6}
+            thickness={0.12}
+            roughness={0.02}
+            transmission={0.99}
             ior={1.77}
-            reflectivity={0.45}
-            clearcoat={0.25}
-            clearcoatRoughness={0.12}
-            depthWrite={false}
+            chromaticAberration={0.015}
+            anisotropy={0.1}
+            clearcoat={1}
+            specularIntensity={0.6}
+            color="#ffffff"
           />
         </mesh>
 
@@ -1514,11 +1507,7 @@ export const TourbillonWatchModel: React.FC = () => {
         </mesh>
 
         {showBlueprintCallouts && (
-          <Html position={[1.68, 0.65, 0]} center distanceFactor={6}>
-            <div className="pointer-events-none whitespace-nowrap rounded-lg border border-sky-500/40 bg-zinc-950/90 px-2.5 py-1 font-mono text-[10px] text-sky-200 shadow-lg backdrop-blur-md">
-              <span className="font-bold text-sky-400">L06 //</span> AR SAPPHIRE CRYSTAL DOME (IOR 1.77)
-            </div>
-          </Html>
+          <BlueprintCallout position={[0.94, 0.85, 0.0]} layer="L06" text="AR SAPPHIRE CRYSTAL DOME (IOR 1.77)" tone="sky" delayMs={0} />
         )}
       </group>
     </group>

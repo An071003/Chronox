@@ -1,159 +1,148 @@
-import React, { useEffect, useState } from 'react';
-import { Moon, Volume2, VolumeX, Layers, Sparkles } from 'lucide-react';
-import { useHorologyStore } from '../../store/useHorologyStore';
-import { useEclipseStore } from '../../store/useEclipseStore';
+import React from 'react';
+import { Moon, Sun, Volume2, VolumeX, Layers } from 'lucide-react';
+import {
+  useHorologyStore,
+  WATCH_MODELS,
+  WatchModelId,
+} from '../../store/useHorologyStore';
 import { horologyAudio } from '../../utils/horologyAudioEngine';
 
-function formatChronoTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const centiseconds = Math.floor((ms % 1000) / 10);
-  const mm = minutes < 10 ? `0${minutes}` : `${minutes}`;
-  const ss = seconds < 10 ? `0${seconds}` : `${seconds}`;
-  const cc = centiseconds < 10 ? `0${centiseconds}` : `${centiseconds}`;
-  return `${mm}:${ss}.${cc}`;
-}
+const MODEL_TABS: { id: WatchModelId; label: string; sub: string }[] = [
+  { id: 'classique', label: 'Classique 36', sub: 'Date · Jubilee' },
+  { id: 'tourbillon', label: 'Tourbillon', sub: 'Skeleton RM-026' },
+];
 
 export const TopTelemetryHeader: React.FC = () => {
+  const model = useHorologyStore((s) => s.model);
   const isNightLume = useHorologyStore((s) => s.isNightLume);
   const isAudioEnabled = useHorologyStore((s) => s.isAudioEnabled);
   const explodedProgress = useHorologyStore((s) => s.explodedProgress);
-  const powerReserve = useHorologyStore((s) => s.powerReserve);
-  const chronoElapsedMs = useHorologyStore((s) => s.chronoElapsedMs);
-  const isChronoRunning = useHorologyStore((s) => s.isChronoRunning);
+  const isIntroComplete = useHorologyStore((s) => s.isIntroComplete);
 
+  const setModel = useHorologyStore((s) => s.setModel);
   const toggleNightLume = useHorologyStore((s) => s.toggleNightLume);
   const toggleAudio = useHorologyStore((s) => s.toggleAudio);
   const toggleBlueprintExplode = useHorologyStore((s) => s.toggleBlueprintExplode);
-  const setExperienceMode = useEclipseStore((s) => s.setExperienceMode);
 
-  const [localTimeStr, setLocalTimeStr] = useState('00:00:00.0');
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      const d = Math.floor(now.getMilliseconds() / 100);
-      setLocalTimeStr(`${hh}:${mm}:${ss}.${d}`);
-    };
-    updateClock();
-    const id = setInterval(updateClock, 100);
-    return () => clearInterval(id);
-  }, []);
-
-  const powerHours = Math.round((powerReserve / 100) * 72);
   const isExploded = explodedProgress > 0.3;
+  const activeIndex = MODEL_TABS.findIndex((t) => t.id === model);
 
   const handleAudioClick = () => {
     toggleAudio();
-    if (!isAudioEnabled) {
-      horologyAudio.playEscapementTick(false);
-    }
+    if (!isAudioEnabled) horologyAudio.playEscapementTick(false);
   };
 
+  const toggleClass = (active: boolean, activeTone: string) =>
+    `group flex h-9 items-center gap-1.5 rounded-xl border px-3 font-mono text-[10.5px] font-medium tracking-wide transition-all duration-300 hover:-translate-y-px active:translate-y-0 active:scale-[0.97] ${
+      active
+        ? activeTone
+        : 'border-white/10 bg-white/[0.03] text-zinc-300 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
+    }`;
+
   return (
-    <header className="pointer-events-auto fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-white/10 bg-black/55 px-5 backdrop-blur-md lg:px-7">
-      {/* Left: Brand Crest + Calibre Reference */}
-      <div className="flex shrink-0 items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/20 to-zinc-900 shadow-inner">
-          <Sparkles className="h-4 w-4 text-amber-400" />
+    <header
+      className={`hud-reveal pointer-events-auto fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-white/[0.07] bg-gradient-to-b from-black/70 to-black/30 px-4 backdrop-blur-md lg:px-6 ${
+        isIntroComplete ? '' : 'hud-hidden-top'
+      }`}
+    >
+      {/* Brand crest + live reference */}
+      <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-200/30 bg-gradient-to-br from-amber-200/15 to-transparent">
+          <div className="absolute inset-[3px] animate-[spin_24s_linear_infinite] rounded-full [background:repeating-conic-gradient(from_0deg,rgba(253,230,138,0.22)_0deg_2deg,transparent_2deg_10deg)]" />
+          <span className="relative font-display text-[13px] font-bold text-amber-100">X</span>
         </div>
-        <div className="whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            <span className="font-display text-sm font-bold tracking-[0.18em] text-white">
-              CHRONO-X // GENÈVE
-            </span>
-            <button
-              type="button"
-              onClick={() => setExperienceMode('eclipse')}
-              className="rounded-full border border-amber-400/50 bg-amber-500/15 px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-200 transition-all hover:bg-amber-500/30"
-            >
-              SWITCH TO ECLIPSE BOSS
-            </button>
-          </div>
-          <p className="font-mono text-[10px] tracking-widest text-zinc-400">
-            REF. RM-026 SKELETON TOURBILLON
+        <div className="min-w-0 whitespace-nowrap">
+          <p className="text-gold-shimmer font-display text-sm font-bold tracking-[0.22em]">
+            CHRONO-X // GENÈVE
+          </p>
+          <p
+            key={model}
+            className="animate-hud-pop hidden font-mono text-[9.5px] tracking-[0.18em] text-zinc-500 sm:block"
+          >
+            {WATCH_MODELS[model].reference}
           </p>
         </div>
       </div>
 
-      {/* Center: Single-Line Live Horological Telemetry Readout */}
-      <div className="hidden shrink-0 items-center gap-3.5 whitespace-nowrap rounded-xl border border-white/10 bg-zinc-950/80 px-4 py-1.5 font-mono text-[11px] xl:flex">
-        <div className="flex items-center gap-1.5">
-          <span className="text-zinc-500">LOCAL TIME:</span>
-          <span className="font-semibold text-amber-300">{localTimeStr}</span>
-        </div>
-        <span className="text-white/15">|</span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-zinc-500">FREQ:</span>
-          <span className="text-zinc-200">3.0 Hz / 21,600 VPH</span>
-        </div>
-        <span className="text-white/15">|</span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-zinc-500">RESERVE:</span>
-          <span className="font-semibold text-emerald-400">
-            {powerHours}h [{Math.round(powerReserve)}%]
-          </span>
-        </div>
-        <span className="text-white/15">|</span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-zinc-500">CHRONO:</span>
+      {/* Model switch with sliding indicator */}
+      <nav
+        aria-label="Watch model"
+        className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block"
+      >
+        <div className="relative flex rounded-2xl border border-white/10 bg-black/40 p-1 shadow-inner">
           <span
-            className={`font-semibold ${
-              isChronoRunning ? 'text-rose-400' : 'text-zinc-300'
-            }`}
-          >
-            {formatChronoTime(chronoElapsedMs)}
-          </span>
+            className="absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-xl border border-amber-200/30 bg-gradient-to-b from-amber-100/15 to-amber-100/[0.04] shadow-[0_0_24px_rgba(251,191,36,0.15)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{ transform: `translateX(${activeIndex * 100}%)`, left: 4 }}
+          />
+          {MODEL_TABS.map((tab) => {
+            const active = tab.id === model;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setModel(tab.id)}
+                className={`relative z-10 w-[148px] rounded-xl px-4 py-1.5 text-left transition-colors duration-300 ${
+                  active ? 'text-white' : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+                aria-pressed={active}
+              >
+                <span className="block font-display text-[12px] font-semibold tracking-[0.12em]">
+                  {tab.label}
+                </span>
+                <span className="block font-mono text-[9px] tracking-wider opacity-70">{tab.sub}</span>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </nav>
 
-      {/* Right: Night Lume, Mechanical Audio, Blueprint Explode Toggles */}
+      {/* Lume, audio, blueprint toggles */}
       <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
         <button
+          type="button"
           onClick={toggleNightLume}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[11px] font-medium transition-all ${
-            isNightLume
-              ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-200 shadow-[0_0_16px_rgba(0,245,212,0.35)]'
-              : 'border-white/10 bg-zinc-900/80 text-zinc-300 hover:border-white/25 hover:text-white'
-          }`}
-          title="Toggle Super-LumiNova BGW9 Night Mode"
+          className={toggleClass(
+            isNightLume,
+            'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_18px_rgba(0,245,212,0.3)]'
+          )}
+          title="Toggle Super-LumiNova night mode"
         >
-          <Moon className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
-          <span>NIGHT LUME</span>
+          {isNightLume ? (
+            <Moon className="h-3.5 w-3.5 text-cyan-300" />
+          ) : (
+            <Sun className="h-3.5 w-3.5 text-amber-200 transition-transform duration-500 group-hover:rotate-45" />
+          )}
+          <span className="hidden xl:inline">{isNightLume ? 'NIGHT LUME' : 'DAY STUDIO'}</span>
         </button>
 
         <button
+          type="button"
           onClick={handleAudioClick}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[11px] font-medium transition-all ${
-            isAudioEnabled
-              ? 'border-amber-400/60 bg-amber-500/20 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
-              : 'border-white/10 bg-zinc-900/80 text-zinc-300 hover:border-white/25 hover:text-white'
-          }`}
-          title="Toggle 21,600 VPH Swiss Lever Escapement Audio"
+          className={toggleClass(
+            isAudioEnabled,
+            'border-amber-300/50 bg-amber-400/15 text-amber-100 shadow-[0_0_18px_rgba(245,158,11,0.28)]'
+          )}
+          title="Toggle mechanical escapement audio"
         >
           {isAudioEnabled ? (
-            <Volume2 className="h-3.5 w-3.5 shrink-0 text-amber-400 animate-pulse" />
+            <Volume2 className="h-3.5 w-3.5 animate-pulse text-amber-300" />
           ) : (
-            <VolumeX className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            <VolumeX className="h-3.5 w-3.5 text-zinc-400" />
           )}
-          <span className="hidden sm:inline">MECHANICAL AUDIO</span>
+          <span className="hidden xl:inline">AUDIO</span>
         </button>
 
         <button
+          type="button"
           onClick={toggleBlueprintExplode}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[11px] font-medium transition-all ${
-            isExploded
-              ? 'border-sky-400/60 bg-sky-500/20 text-sky-200 shadow-[0_0_15px_rgba(56,189,248,0.3)]'
-              : 'border-white/10 bg-zinc-900/80 text-zinc-300 hover:border-white/25 hover:text-white'
-          }`}
-          title="Explode 6-Layer Horological Calibre"
+          className={toggleClass(
+            isExploded,
+            'border-sky-300/50 bg-sky-400/15 text-sky-100 shadow-[0_0_18px_rgba(56,189,248,0.3)]'
+          )}
+          title="Explode the calibre into its six layers"
         >
-          <Layers className="h-3.5 w-3.5 shrink-0 text-sky-400" />
-          <span className="hidden md:inline">BLUEPRINT EXPLODE</span>
+          <Layers className="h-3.5 w-3.5 text-sky-300" />
+          <span className="hidden xl:inline">EXPLODE</span>
         </button>
       </div>
     </header>

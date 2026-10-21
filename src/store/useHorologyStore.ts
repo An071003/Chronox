@@ -1,13 +1,203 @@
 import { create } from 'zustand';
 
+export type WatchModelId = 'classique' | 'tourbillon';
+
 export type EditionId = 'rosegold' | 'titanium' | 'carbon' | 'platinum';
+
+export type ClassiqueEditionId =
+  | 'everose_diamond'
+  | 'yellow_fluted'
+  | 'steel_azure'
+  | 'white_mint';
 
 export type CameraPresetId =
   | 'dial_hero'
   | 'macro_tourbillon'
   | 'crown_pushers'
   | 'caseback'
-  | 'side_profile';
+  | 'side_profile'
+  | 'cyclops_date'
+  | 'bezel_macro'
+  | 'bracelet';
+
+export interface WatchModelConfig {
+  id: WatchModelId;
+  name: string;
+  reference: string;
+  calibre: string;
+  beatsPerSecond: number;
+  frequencyLabel: string;
+  powerReserveHours: number;
+  cameraPresets: { id: CameraPresetId; label: string }[];
+}
+
+export const WATCH_MODELS: Record<WatchModelId, WatchModelConfig> = {
+  classique: {
+    id: 'classique',
+    name: 'Classique Date 36',
+    reference: 'REF. CX-126 CLASSIQUE DATE 36',
+    calibre: 'Calibre CX-3235 Automatic',
+    beatsPerSecond: 8,
+    frequencyLabel: '4.0 Hz / 28,800 VPH',
+    powerReserveHours: 70,
+    cameraPresets: [
+      { id: 'dial_hero', label: 'Dial Hero' },
+      { id: 'cyclops_date', label: 'Cyclops Date (3h)' },
+      { id: 'bezel_macro', label: 'Bezel Macro' },
+      { id: 'bracelet', label: 'Jubilee Bracelet' },
+      { id: 'side_profile', label: 'Case Profile' },
+      { id: 'caseback', label: 'Exhibition Caseback' },
+    ],
+  },
+  tourbillon: {
+    id: 'tourbillon',
+    name: 'Skeleton Tourbillon',
+    reference: 'REF. RM-026 SKELETON TOURBILLON',
+    calibre: 'Calibre RM-026 Flying Tourbillon',
+    beatsPerSecond: 6,
+    frequencyLabel: '3.0 Hz / 21,600 VPH',
+    powerReserveHours: 72,
+    cameraPresets: [
+      { id: 'dial_hero', label: 'Dial Hero' },
+      { id: 'macro_tourbillon', label: 'Macro Tourbillon (6h)' },
+      { id: 'crown_pushers', label: 'Crown & Pushers (3h)' },
+      { id: 'caseback', label: 'Exhibition Caseback' },
+      { id: 'side_profile', label: 'Side Calibre Profile' },
+    ],
+  },
+};
+
+export interface ClassiqueEditionConfig {
+  id: ClassiqueEditionId;
+  name: string;
+  shortName: string;
+  subtitle: string;
+  swatchPrimary: string;
+  swatchSecondary: string;
+  caseColor: string;
+  goldColor: string;
+  bezelStyle: 'diamond' | 'fluted' | 'smooth';
+  dialStyle: 'fluted_motif' | 'sunray';
+  dialColor: string;
+  dialEdgeColor: string;
+  printColor: string;
+  printSecondaryColor: string;
+  braceletOuterColor: string;
+  braceletCenterColor: string;
+  lumeDayColor: string;
+  specs: { label: string; value: string }[];
+}
+
+export const CLASSIQUE_EDITIONS: Record<ClassiqueEditionId, ClassiqueEditionConfig> = {
+  everose_diamond: {
+    id: 'everose_diamond',
+    name: 'ROSE GOLD TWO-TONE · DIAMOND BEZEL',
+    shortName: 'Rose Gold Diamond',
+    subtitle: 'Silver Fluted Motif Dial',
+    swatchPrimary: '#F2C3A8',
+    swatchSecondary: '#D9DCE0',
+    caseColor: '#CDD0D4',
+    goldColor: '#F4C1A4',
+    bezelStyle: 'diamond',
+    dialStyle: 'fluted_motif',
+    dialColor: '#E9E6E1',
+    dialEdgeColor: '#C9C5BF',
+    printColor: '#1D1D20',
+    printSecondaryColor: '#6B6A6C',
+    braceletOuterColor: '#CDD0D4',
+    braceletCenterColor: '#F4C1A4',
+    lumeDayColor: '#F6F1E7',
+    specs: [
+      { label: 'Case', value: '36 mm 904L steel' },
+      { label: 'Bezel', value: '18K rose gold · 52 brilliants' },
+      { label: 'Dial', value: 'Silver fluted motif' },
+      { label: 'Bracelet', value: 'Jubilee 5-link two-tone' },
+      { label: 'Crystal', value: 'Sapphire · cyclops 2.5×' },
+      { label: 'Water', value: '100 m / 330 ft' },
+    ],
+  },
+  yellow_fluted: {
+    id: 'yellow_fluted',
+    name: 'YELLOW TWO-TONE · FLUTED BEZEL',
+    shortName: 'Yellow Fluted',
+    subtitle: 'Champagne Sunray Dial',
+    swatchPrimary: '#F3D58A',
+    swatchSecondary: '#D9DCE0',
+    caseColor: '#CDD0D4',
+    goldColor: '#F6D688',
+    bezelStyle: 'fluted',
+    dialStyle: 'sunray',
+    dialColor: '#D8BE86',
+    dialEdgeColor: '#9C824F',
+    printColor: '#2A2316',
+    printSecondaryColor: '#5E4F33',
+    braceletOuterColor: '#CDD0D4',
+    braceletCenterColor: '#F6D688',
+    lumeDayColor: '#F7F0DC',
+    specs: [
+      { label: 'Case', value: '36 mm 904L steel' },
+      { label: 'Bezel', value: '18K yellow gold · fluted' },
+      { label: 'Dial', value: 'Champagne sunray' },
+      { label: 'Bracelet', value: 'Jubilee 5-link two-tone' },
+      { label: 'Crystal', value: 'Sapphire · cyclops 2.5×' },
+      { label: 'Water', value: '100 m / 330 ft' },
+    ],
+  },
+  steel_azure: {
+    id: 'steel_azure',
+    name: '904L STEEL · SMOOTH BEZEL',
+    shortName: 'Steel Azure',
+    subtitle: 'Azure Blue Sunray Dial',
+    swatchPrimary: '#2F5DB8',
+    swatchSecondary: '#D9DCE0',
+    caseColor: '#CDD0D4',
+    goldColor: '#E4E7EA',
+    bezelStyle: 'smooth',
+    dialStyle: 'sunray',
+    dialColor: '#2C58B0',
+    dialEdgeColor: '#0E2050',
+    printColor: '#F4F6FA',
+    printSecondaryColor: '#B8C6E6',
+    braceletOuterColor: '#CDD0D4',
+    braceletCenterColor: '#E4E7EA',
+    lumeDayColor: '#EEF3FF',
+    specs: [
+      { label: 'Case', value: '36 mm 904L steel' },
+      { label: 'Bezel', value: 'Polished domed steel' },
+      { label: 'Dial', value: 'Azure blue sunray' },
+      { label: 'Bracelet', value: 'Jubilee 5-link steel' },
+      { label: 'Crystal', value: 'Sapphire · cyclops 2.5×' },
+      { label: 'Water', value: '100 m / 330 ft' },
+    ],
+  },
+  white_mint: {
+    id: 'white_mint',
+    name: 'WHITE GOLD · FLUTED BEZEL',
+    shortName: 'Mint Fluted',
+    subtitle: 'Mint Green Sunray Dial',
+    swatchPrimary: '#9CCDB6',
+    swatchSecondary: '#E6E8EA',
+    caseColor: '#CDD0D4',
+    goldColor: '#E6E7E8',
+    bezelStyle: 'fluted',
+    dialStyle: 'sunray',
+    dialColor: '#9CCAB4',
+    dialEdgeColor: '#4F7F6A',
+    printColor: '#13261E',
+    printSecondaryColor: '#3D5C4E',
+    braceletOuterColor: '#CDD0D4',
+    braceletCenterColor: '#E6E7E8',
+    lumeDayColor: '#F1F7F3',
+    specs: [
+      { label: 'Case', value: '36 mm 904L steel' },
+      { label: 'Bezel', value: '18K white gold · fluted' },
+      { label: 'Dial', value: 'Mint green sunray' },
+      { label: 'Bracelet', value: 'Jubilee 5-link steel' },
+      { label: 'Crystal', value: 'Sapphire · cyclops 2.5×' },
+      { label: 'Water', value: '100 m / 330 ft' },
+    ],
+  },
+};
 
 export interface EditionConfig {
   id: EditionId;
@@ -129,7 +319,12 @@ export const HOROLOGY_EDITIONS: Record<EditionId, EditionConfig> = {
 };
 
 interface HorologyState {
+  model: WatchModelId;
   edition: EditionId;
+  classiqueEdition: ClassiqueEditionId;
+  dateOffsetDays: number;
+  showcaseSpinTrigger: number; // bumps on edition change -> 3D turntable spin
+  isIntroComplete: boolean;
   isNightLume: boolean;
   isAudioEnabled: boolean;
   explodedProgress: number;
@@ -145,7 +340,12 @@ interface HorologyState {
   cameraPreset: CameraPresetId;
 
   // Actions
+  setModel: (model: WatchModelId) => void;
   setEdition: (edition: EditionId) => void;
+  setClassiqueEdition: (edition: ClassiqueEditionId) => void;
+  advanceDate: () => void;
+  resetDate: () => void;
+  setIntroComplete: () => void;
   toggleNightLume: () => void;
   toggleAudio: () => void;
   setExplodedProgress: (val: number) => void;
@@ -161,7 +361,12 @@ interface HorologyState {
 }
 
 export const useHorologyStore = create<HorologyState>((set, get) => ({
+  model: 'classique',
   edition: 'rosegold',
+  classiqueEdition: 'everose_diamond',
+  dateOffsetDays: 0,
+  showcaseSpinTrigger: 0,
+  isIntroComplete: false,
   isNightLume: false,
   isAudioEnabled: false,
   explodedProgress: 0,
@@ -176,7 +381,35 @@ export const useHorologyStore = create<HorologyState>((set, get) => ({
   flybackSnapTrigger: 0,
   cameraPreset: 'dial_hero',
 
-  setEdition: (edition) => set({ edition }),
+  setModel: (model) => {
+    if (get().model === model) return;
+    set({
+      model,
+      cameraPreset: 'dial_hero',
+      explodedProgress: 0,
+      isChronoRunning: false,
+      chronoElapsedMs: 0,
+    });
+  },
+
+  setEdition: (edition) => {
+    if (get().edition === edition) return;
+    set((state) => ({ edition, showcaseSpinTrigger: state.showcaseSpinTrigger + 1 }));
+  },
+
+  setClassiqueEdition: (classiqueEdition) => {
+    if (get().classiqueEdition === classiqueEdition) return;
+    set((state) => ({
+      classiqueEdition,
+      showcaseSpinTrigger: state.showcaseSpinTrigger + 1,
+    }));
+  },
+
+  advanceDate: () => set((state) => ({ dateOffsetDays: state.dateOffsetDays + 1 })),
+
+  resetDate: () => set({ dateOffsetDays: 0 }),
+
+  setIntroComplete: () => set({ isIntroComplete: true }),
 
   toggleNightLume: () => set((state) => ({ isNightLume: !state.isNightLume })),
 
