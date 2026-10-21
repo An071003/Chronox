@@ -61,13 +61,25 @@ const CameraMacroRig: React.FC = () => {
     const ease = firstReveal ? 'expo.out' : 'power3.inOut';
 
     gsap.killTweensOf(camera.position);
-    gsap.to(camera.position, {
-      x: preset.pos[0],
-      y: preset.pos[1],
-      z: preset.pos[2],
-      duration,
-      ease,
-    });
+    const crossesWatch = !firstReveal && camera.position.z * preset.pos[2] < 0;
+    if (crossesWatch) {
+      // Front <-> back moves orbit around the side instead of flying through the case
+      const side = camera.position.x + preset.pos[0] >= 0 ? 1 : -1;
+      gsap.to(camera.position, {
+        keyframes: [
+          { x: side * 4.6, y: 0.9, z: 0, duration: duration * 0.55, ease: 'power2.in' },
+          { x: preset.pos[0], y: preset.pos[1], z: preset.pos[2], duration: duration * 0.75, ease: 'power3.out' },
+        ],
+      });
+    } else {
+      gsap.to(camera.position, {
+        x: preset.pos[0],
+        y: preset.pos[1],
+        z: preset.pos[2],
+        duration,
+        ease,
+      });
+    }
 
     if (controlsRef.current) {
       gsap.killTweensOf(controlsRef.current.target);
@@ -210,6 +222,9 @@ const AdaptiveStudioLighting: React.FC = () => {
         {/* Thin vertical strip lights: crisp bright lines on polished bezels & diamonds */}
         <Lightformer form="rect" intensity={6} position={[-2.2, 0, 6]} scale={[0.35, 9, 1]} target={[0, 0, 0]} color="#ffffff" />
         <Lightformer form="rect" intensity={5} position={[2.6, 0.5, 5.5]} scale={[0.25, 9, 1]} target={[0, 0, 0]} color="#ffffff" />
+        {/* Rear softboxes so the exhibition caseback and movement read in back views */}
+        <Lightformer form="rect" intensity={2.4} position={[-2, 3, -7]} scale={[6, 4, 1]} target={[0, 0, 0]} color="#fff7ed" />
+        <Lightformer form="rect" intensity={4} position={[2.4, -0.5, -6]} scale={[0.3, 8, 1]} target={[0, 0, 0]} color="#ffffff" />
         {/* Bottom warm bounce */}
         <Lightformer form="rect" intensity={2.2} position={[0, -7, 2]} scale={[9, 3.5, 1]} rotation-x={-Math.PI / 2} color="#fed7aa" />
       </Environment>

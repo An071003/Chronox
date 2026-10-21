@@ -2,6 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { Html, MeshTransmissionMaterial, RoundedBox } from '@react-three/drei';
 import { BlueprintCallout } from './BlueprintCallout';
+import {
+  ClassiqueCaseDetails,
+  ClassiqueCasebackDetails,
+  ClassiqueClaspDetails,
+  ClassiqueDialDetails,
+  ClassiqueMovementDetails,
+} from './ClassiqueDetailParts';
 import { RoundedBoxGeometry } from 'three-stdlib';
 import * as THREE from 'three';
 import {
@@ -781,7 +788,10 @@ const ClassiqueWatchAssembly: React.FC = () => {
             bumpScale={0.002}
             envMapIntensity={1.7}
           />
+          <ClassiqueClaspDetails steel={edition.braceletOuterColor} gold={edition.goldColor} />
         </mesh>
+
+        <ClassiqueCaseDetails steel={edition.caseColor} />
 
         {/* Velvet presentation cushion */}
         <mesh ref={cushionRef} geometry={cushionGeometry} position={[0, 0, -1.06]}>
@@ -816,6 +826,7 @@ const ClassiqueWatchAssembly: React.FC = () => {
             depthWrite={false}
           />
         </mesh>
+        <ClassiqueCasebackDetails steel={edition.caseColor} />
         {showCallouts && (
           <BlueprintCallout
             position={[0.47, -0.85, -0.28]}
@@ -880,6 +891,8 @@ const ClassiqueWatchAssembly: React.FC = () => {
             <RubyJewel position={[0, 0, 0.022]} radius={0.016} chaton={edition.goldColor} />
           </group>
 
+          <ClassiqueMovementDetails gold={edition.goldColor} />
+
           {/* Self-winding rotor */}
           <group ref={rotorRef} position={[0, 0, 0.07]}>
             <mesh geometry={geo.rotor}>
@@ -900,7 +913,7 @@ const ClassiqueWatchAssembly: React.FC = () => {
           <BlueprintCallout
             position={[0.81, -0.53, -0.2]}
             layer="L02"
-            text="CALIBRE CX-3235 · 28,800 VPH · 70H"
+            text="CALIBRE CX-3235 · 31 JEWELS · BLUED SCREWS · 70H"
             tone="rose"
             delayMs={200}
           />
@@ -962,6 +975,8 @@ const ClassiqueWatchAssembly: React.FC = () => {
             </RoundedBox>
           ))}
         </group>
+
+        <ClassiqueDialDetails gold={edition.goldColor} lumeDay={edition.lumeDayColor} dialZ={DIAL_Z} />
 
         {/* Date disc + polished frame + click target */}
         <mesh position={[DATE_WINDOW.x, DATE_WINDOW.y, DIAL_Z - 0.012]}>
